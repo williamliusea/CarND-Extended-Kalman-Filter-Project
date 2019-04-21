@@ -42,7 +42,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   double rho = sqrt(px*px+py*py);
   MatrixXd hx(3, 1);
-  hx << rho, atan2(py, px), rho==0? 0:(px*vx+py*vy)/rho;
+  hx << rho, atan2(py, px), (px*vx+py*vy)/rho;
   VectorXd y = z - hx;
   // theta must be with in -pi degree to +pi degree
   if (y(1)> M_PI) {

@@ -13,20 +13,18 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
   VectorXd rmse(4);
   rmse << 0,0,0,0;
-
   // check the validity of the following inputs:
   //  * the estimation vector size should not be zero
   //  * the estimation vector size should equal ground truth vector size
   if (estimations.size() > 0 && ground_truth.size()==estimations.size() ) {
-    VectorXd sum(4);
     for (int i=0; i < estimations.size(); ++i) {
       VectorXd diff = estimations[i]-ground_truth[i];
       VectorXd sq = diff.array()*diff.array();
-      sum+=sq;
+      rmse+=sq;
     }
 
-    sum = sum / estimations.size();
-    rmse = sum.array().sqrt();
+    rmse = rmse / estimations.size();
+    rmse = rmse.array().sqrt();
   } else {
     cout << "Invalid estimation or ground_truth data" << endl;
   }
@@ -44,7 +42,7 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
 
   // pre-compute a set of terms to avoid repeated calculation
   float pSum= px*px+py*py;
-  if (pSum>0) {
+  if (pSum>0.0001) {
   // compute the Jacobian matrix
     float pRoot = sqrt(pSum);
     float pv=py*vx-px*vy;

@@ -64,9 +64,16 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       double rho = measurement_pack.raw_measurements_(0);
       double theta = measurement_pack.raw_measurements_(1);
       double rhodot = measurement_pack.raw_measurements_(2);
-
+      double x = rho * cos(theta);
+      double y = rho * sin(theta);
+      if (x == 0) {
+        x = 0.00001;
+      }
+      if (y == 0) {
+        y = 0.00001;
+      }
       // polar to cartesian - r * cos(angle) for x and r * sin(angle) for y
-      ekf_.x_ << rho * cos(theta), rho * sin(theta), rhodot * cos(theta), rhodot * sin(theta);
+      ekf_.x_ << x, y, rhodot * cos(theta), rhodot * sin(theta);
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       cout << "EKF : First measurement LASER" << endl;
@@ -101,18 +108,13 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
             0,0,1,0,
             0,0,0,1;
   // set the process covariance matrix Q
-  int noise_ax = 9;
-  int noise_ay = 9;
+  float noise_ax = 9.0;
+  float noise_ay = 9.0;
   ekf_.Q_ = MatrixXd(4, 4);
   ekf_.Q_ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
          0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
          dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
          0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
-   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-     cout << "EKF : RADAR before predict" << endl;
-   } else {
-     cout << "EKF : LASER before predict" << endl;
-   }
   ekf_.Predict();
 
   /**
@@ -120,12 +122,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    */
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-    cout << "EKF : RADAR" << endl;
     ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
     ekf_.R_ = R_radar_;
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
   } else {
-    cout << "EKF : LASER" << endl;
     ekf_.H_ = H_laser_;
     ekf_.R_ = R_laser_;
     ekf_.Update(measurement_pack.raw_measurements_);
